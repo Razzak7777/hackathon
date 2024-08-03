@@ -1,6 +1,5 @@
 import requests
 import streamlit as st
-import json
 
 # Set up API endpoint and key directly in the code
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -10,25 +9,6 @@ headers = {
     "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
 }
-
-# Load the faculty data from the JSON file
-def load_faculty_data(file_path):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
-
-
-# Function to find faculty information based on a query
-def get_faculty_info(query):
-    response = "Here is the information about the faculty members:\n\n"
-    found = False
-    for faculty in faculty_data["selection1"]:
-        if any(term.lower() in faculty["name"].lower() for term in query.split()):
-            response += f"{faculty['name']}\n\n"
-            found = True
-    if not found:
-        response = "Faculty member not found."
-    return response
 
 # Initialize the session state
 if "messages" not in st.session_state:
@@ -50,7 +30,7 @@ with st.sidebar:
         st.session_state["messages"] = []
 
 # Display the chat title
-st.title("LordsGPT-🤖 (by Llama 3.1)")
+st.title("CODER AI 🤖")
 
 # Style for user messages in a green box
 user_message_style = """
@@ -101,30 +81,18 @@ if user_input := st.chat_input("Ask me anything!"):
         unsafe_allow_html=True,
     )
 
-    # Check if the query is related to faculty information
-    if "faculty" in user_input.lower() or "staff" in user_input.lower() or "professor" in user_input.lower():
-        # Respond with faculty information
-        faculty_response = get_faculty_info(user_input)
-        st.session_state.messages.append({"role": "assistant", "content": faculty_response})
+    # Call the Llama 3 API
+    try:
+        response = call_llama_api(st.session_state.messages)
+        assistant_response = response["choices"][0]["message"]["content"]
+        st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
-        # Display the assistant's response
+        # Display the assistant's response as plain text
         st.markdown(
-            f'<div style="text-align: left; margin-bottom: 10px;"><strong>{assistant_emoji}</strong> {faculty_response}</div>',
+            f'<div style="text-align: left; margin-bottom: 10px;"><strong>{assistant_emoji}</strong> {assistant_response}</div>',
             unsafe_allow_html=True,
         )
-    else:
-        # Call the Llama 3 API
-        try:
-            response = call_llama_api(st.session_state.messages)
-            assistant_response = response["choices"][0]["message"]["content"]
-            st.session_state.messages.append({"role": "assistant", "content": assistant_response})
-
-            # Display the assistant's response
-            st.markdown(
-                f'<div style="text-align: left; margin-bottom: 10px;"><strong>{assistant_emoji}</strong> {assistant_response}</div>',
-                unsafe_allow_html=True,
-            )
-        except requests.exceptions.RequestException as e:
-            st.error(f"API request failed: {e}")
-        except KeyError:
-            st.error("Unexpected response structure from API.")
+    except requests.exceptions.RequestException as e:
+        st.error(f"API request failed: {e}")
+    except KeyError:
+        st.error("Unexpected response structure from API.")
