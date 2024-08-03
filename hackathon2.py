@@ -1,6 +1,6 @@
 import requests
 import streamlit as st
-import webbrowser
+import json
 
 # Set up API endpoint and key directly in the code
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -11,30 +11,24 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Function to open YouTube links
-def open_youtube_link(query):
-    youtube_links = {
-        "8 science youtube": "https://www.youtube.com/watch?v=DqtUDWW1x6c",
-        "python youtube": "https://www.youtube.com/watch?v=vLqTf2b6GZw",
-        "8 maths youtube ": "https://www.youtube.com/watch?v=2AmldBXnzvY&list=PLVLoWQFkZbhUPr3lid5ATpymNOAfpk9-c",
-        "c language youtube": "https://www.youtube.com/watch?v=irqbmMNs2Bo",
-        "python english youtube": "https://www.youtube.com/watch?v=XKHEtdqhLK8",
-        "10th  maths youtube": "https://www.youtube.com/watch?v=mDa3R4StLkw&list=PLAODbdRxgpSMs4q0cidru2ajfxoPR44vJ",
-        "10th science youtube": "https://www.youtube.com/watch?v=uuYN1M3ZGpY",
-        "class 11th youtube": "https://www.youtube.com/watch?v=etykWjsMF7s&list=PLVLoWQFkZbhWF3ezaGYnkCKE0hHPaSbLO",
-        "class 11th physics youtube": "https://www.youtube.com/watch?v=yF291D4XcMo&list=PLVLoWQFkZbhXCEo76NKI0C46ROnlSz7XE",
-        "class 11th chemistry youtube": "https://www.youtube.com/watch?v=0mmxbFf05mI&list=PLCzaIJYXP5YcTsTTgbgCrcV2CYTFonHbE",
-        "class 12th chemistry youtube": "https://www.youtube.com/watch?v=4PedE2KTCww&list=PLVLoWQFkZbhV5bQRjcJc9XDh_ekff6Xb3",
-        "class 12th maths youtube": "https://www.youtube.com/watch?v=23a3rrNWmJ8&list=PLVLoWQFkZbhU5r5DlfxPc3gKw-QLLAvLn",
-        "class 12th physicsyoutube": "https://www.youtube.com/watch?v=axedPR8TLa0&list=PLVLoWQFkZbhV-wpC6Z6bUWz9m3itDKmYe"
-    }
-    
-    for key in youtube_links:
-        if key in query.lower():
-            webbrowser.open(youtube_links[key])
-            return f"Opening YouTube link for {key}"
-    
-    return "No matching YouTube link found."
+# Load the faculty data from the JSON file
+def load_faculty_data(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+
+# Function to find faculty information based on a query
+def get_faculty_info(query):
+    response = "Here is the information about the faculty members:\n\n"
+    found = False
+    for faculty in faculty_data["selection1"]:
+        if any(term.lower() in faculty["name"].lower() for term in query.split()):
+            response += f"{faculty['name']}\n\n"
+            found = True
+    if not found:
+        response = "Faculty member not found."
+    return response
 
 # Initialize the session state
 if "messages" not in st.session_state:
@@ -56,7 +50,7 @@ with st.sidebar:
         st.session_state["messages"] = []
 
 # Display the chat title
-st.title("CODER AI - 🤖")
+st.title("LordsGPT-🤖 (by Llama 3.1)")
 
 # Style for user messages in a green box
 user_message_style = """
@@ -107,14 +101,15 @@ if user_input := st.chat_input("Ask me anything!"):
         unsafe_allow_html=True,
     )
 
-    # Check if the query is related to YouTube links
-    youtube_response = open_youtube_link(user_input)
-    if "Opening YouTube link" in youtube_response:
-        st.session_state.messages.append({"role": "assistant", "content": youtube_response})
+    # Check if the query is related to faculty information
+    if "faculty" in user_input.lower() or "staff" in user_input.lower() or "professor" in user_input.lower():
+        # Respond with faculty information
+        faculty_response = get_faculty_info(user_input)
+        st.session_state.messages.append({"role": "assistant", "content": faculty_response})
 
         # Display the assistant's response
         st.markdown(
-            f'<div style="text-align: left; margin-bottom: 10px;"><strong>{assistant_emoji}</strong> {youtube_response}</div>',
+            f'<div style="text-align: left; margin-bottom: 10px;"><strong>{assistant_emoji}</strong> {faculty_response}</div>',
             unsafe_allow_html=True,
         )
     else:
