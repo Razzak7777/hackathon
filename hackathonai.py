@@ -49,7 +49,7 @@ with st.sidebar:
         st.session_state["messages"] = []
 
 # Display the chat title
-st.title("Interactive AI - Chatbot")
+st.title("Interactive AI - 💬")
 
 # Style for user messages in a green box
 user_message_style = """
